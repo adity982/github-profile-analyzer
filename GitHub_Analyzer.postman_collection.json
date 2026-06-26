@@ -1,0 +1,183 @@
+{
+  "info": {
+    "name": "GitHub Profile Analyzer API",
+    "description": "Complete Postman collection for the GitHub Profile Analyzer backend service.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "github-analyzer-v1"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string",
+      "description": "Change to your deployed URL for production testing"
+    },
+    {
+      "key": "username",
+      "value": "torvalds",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🏠 Root",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/",
+          "host": ["{{base_url}}"],
+          "path": [""]
+        },
+        "description": "Returns API overview and available endpoints."
+      }
+    },
+    {
+      "name": "❤️ Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        },
+        "description": "Checks server and database health."
+      }
+    },
+    {
+      "name": "🔍 Analyze Profile",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/profiles/analyze/{{username}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "profiles", "analyze", "{{username}}"]
+        },
+        "description": "Fetch a GitHub user profile + repos, compute insights, and store in MySQL. Re-running updates the profile and adds a new insight snapshot."
+      }
+    },
+    {
+      "name": "📋 List All Profiles",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/profiles?page=1&limit=20&sortBy=followers&order=DESC",
+          "host": ["{{base_url}}"],
+          "path": ["api", "profiles"],
+          "query": [
+            { "key": "page",   "value": "1" },
+            { "key": "limit",  "value": "20" },
+            { "key": "sortBy", "value": "followers",
+              "description": "Options: followers, public_repos, total_stars_received, profile_score, last_analyzed_at, username" },
+            { "key": "order",  "value": "DESC" },
+            { "key": "search", "value": "", "disabled": true,
+              "description": "Filter by username (partial match)" }
+          ]
+        },
+        "description": "Returns all stored profiles with their latest insights. Supports pagination, search, and sorting."
+      }
+    },
+    {
+      "name": "👤 Get Single Profile",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/profiles/{{username}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "profiles", "{{username}}"]
+        },
+        "description": "Fetch a stored profile with its full insights and the last 10 analysis snapshots. Results are cached for CACHE_TTL seconds."
+      }
+    },
+    {
+      "name": "🗑️ Delete Profile",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/profiles/{{username}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "profiles", "{{username}}"]
+        },
+        "description": "Permanently deletes a profile and all its insight history from the database."
+      }
+    },
+    {
+      "name": "⚡ GitHub Rate Limit",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/github/rate-limit",
+          "host": ["{{base_url}}"],
+          "path": ["api", "github", "rate-limit"]
+        },
+        "description": "Check remaining GitHub API quota. Without a token: 60/hr. With GITHUB_TOKEN: 5000/hr."
+      }
+    },
+    {
+      "name": "🔍 Analyze - octocat",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/profiles/analyze/octocat",
+          "host": ["{{base_url}}"],
+          "path": ["api", "profiles", "analyze", "octocat"]
+        },
+        "description": "Test with GitHub's official demo account."
+      }
+    },
+    {
+      "name": "🔍 Analyze - invalid user (404 test)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/profiles/analyze/this-user-definitely-does-not-exist-xyz-9999",
+          "host": ["{{base_url}}"],
+          "path": ["api", "profiles", "analyze", "this-user-definitely-does-not-exist-xyz-9999"]
+        },
+        "description": "Should return a 404 error from the GitHub API."
+      }
+    },
+    {
+      "name": "📋 List - Search by username",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/profiles?search=linus&sortBy=followers&order=DESC",
+          "host": ["{{base_url}}"],
+          "path": ["api", "profiles"],
+          "query": [
+            { "key": "search",  "value": "linus" },
+            { "key": "sortBy",  "value": "followers" },
+            { "key": "order",   "value": "DESC" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "📋 List - Sort by stars",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/profiles?sortBy=total_stars_received&order=DESC&limit=10",
+          "host": ["{{base_url}}"],
+          "path": ["api", "profiles"],
+          "query": [
+            { "key": "sortBy", "value": "total_stars_received" },
+            { "key": "order",  "value": "DESC" },
+            { "key": "limit",  "value": "10" }
+          ]
+        }
+      }
+    }
+  ]
+}

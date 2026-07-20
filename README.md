@@ -1,6 +1,6 @@
 # 🔍 GitHub Profile Analyzer API
 
-A production-ready Node.js backend service that fetches GitHub user profiles via the GitHub Public API, computes meaningful insights, and stores everything in a MySQL database.
+A reference Node.js backend that fetches public GitHub profiles, computes portfolio insights, and stores analysis snapshots in MySQL.
 
 ---
 
@@ -62,7 +62,7 @@ github-analyzer/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/<your-username>/github-profile-analyzer.git
+git clone https://github.com/adity982/github-profile-analyzer.git
 cd github-profile-analyzer
 ```
 
@@ -300,8 +300,29 @@ Set the collection variable `base_url` to your deployed or local URL.
 
 ---
 
+## ✅ Validation
+
+This repository currently includes a manual smoke-test path:
+
+1. Start MySQL and apply `sql/schema.sql`.
+2. Run `npm install` and `npm start`.
+3. Check `GET /health` for server and database status.
+4. Analyze a public account with `POST /api/profiles/analyze/:username`.
+5. Confirm the saved result with `GET /api/profiles/:username`.
+
+Automated tests and CI are not included yet; treat this as a reference implementation until that gap is closed.
+
+---
+
 ## 📝 Notes
 
 - Without a `GITHUB_TOKEN`, the GitHub API allows 60 requests/hour. With a token, this increases to **5,000/hour**. Tokens for public data require no scopes.
 - The `profile_insights` table keeps a full history of every analysis run, so you can track metric changes over time.
 - All DB queries use parameterized statements — no SQL injection risk.
+
+
+---
+
+## 📄 License
+
+Licensed under the [ISC License](LICENSE).

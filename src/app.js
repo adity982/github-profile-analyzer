@@ -74,12 +74,18 @@ const PORT = process.env.PORT || 3000;
 
 async function start() {
   await connectDB();
-  app.listen(PORT, () => {
+  return app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
     console.log(`📖 Environment: ${process.env.NODE_ENV || 'development'}`);
   });
 }
 
-start();
+if (require.main === module) {
+  start().catch((err) => {
+    console.error('[StartupError]', err.stack || err.message);
+    process.exitCode = 1;
+  });
+}
 
 module.exports = app;
+module.exports.start = start;

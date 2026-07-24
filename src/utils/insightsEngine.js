@@ -74,7 +74,6 @@ function computeProfileScore(user) {
  * Main function: derive all insights from user + repos.
  */
 function computeInsights(user, repos) {
-  const now = new Date();
   const sixMonthsAgo = SIX_MONTHS_AGO();
 
   // Stars / forks
@@ -86,8 +85,11 @@ function computeInsights(user, repos) {
   const forkedRepos   = repos.filter(r => r.fork);
   const originalRepos = repos.filter(r => !r.fork);
 
-  // Most starred
-  const mostStarred = repos.sort((a, b) => b.stargazers_count - a.stargazers_count)[0];
+  // Most starred (reduce instead of sorting so callers keep their repo order)
+  const mostStarred = repos.reduce((best, repo) => {
+    if (!best) return repo;
+    return (repo.stargazers_count || 0) > (best.stargazers_count || 0) ? repo : best;
+  }, null);
 
   // Activity
   const activeRepos = repos.filter(r => {
@@ -96,8 +98,8 @@ function computeInsights(user, repos) {
   });
 
   // Languages & topics
-  const topLanguages     = computeLanguages(repos);
-  const topicsUsed       = computeTopics(repos);
+  const topLanguages      = computeLanguages(repos);
+  const topicsUsed        = computeTopics(repos);
   const languageDiversity = topLanguages.length;
 
   // Profile completeness

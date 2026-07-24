@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "lint": "echo 'Add ESLint config as needed'"
+    "lint": "echo 'Add ESLint config as needed'",
+    "test": "node --test"
   },
   "keywords": ["github", "api", "node", "express", "mysql"],
   "author": "",

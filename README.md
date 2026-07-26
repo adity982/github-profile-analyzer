@@ -1,328 +1,171 @@
-# 🔍 GitHub Profile Analyzer API
+# GitHub Profile Analyzer API
 
-A reference Node.js backend that fetches public GitHub profiles, computes portfolio insights, and stores analysis snapshots in MySQL.
+A Node.js API that turns public GitHub profile data into useful portfolio insights and stores analysis history in MySQL.
 
----
+[![CI](https://github.com/adity982/github-profile-analyzer/actions/workflows/ci.yml/badge.svg)](https://github.com/adity982/github-profile-analyzer/actions/workflows/ci.yml)
+[![Node.js 18+](https://img.shields.io/badge/Node.js-18%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](LICENSE)
 
-## ✨ Features
+## Why this project exists
 
-| Feature | Details |
+A repository count alone says little about a developer portfolio. This API combines profile and repository data into signals such as original-vs-forked work, stars and forks received, language diversity, topic usage, recent activity, and profile completeness. Each run is saved so applications can show how a profile changes over time.
+
+## Features
+
+| Feature | What it provides |
 |---|---|
-| **Profile Analysis** | Fetches full profile + up to 200 repos per user |
-| **Rich Insights Engine** | Computes 15+ derived metrics per analysis |
-| **MySQL Persistence** | Profiles + per-run snapshots stored; analysis history tracked |
-| **In-Memory Cache** | Redis-free caching via `node-cache` (configurable TTL) |
-| **Rate Limiting** | API-wide rate limiting via `express-rate-limit` |
-| **Pagination + Search** | List endpoint supports page/limit/search/sort/order |
-| **Security** | `helmet`, `cors`, input validation, parameterized queries |
-| **Health Check** | `/health` endpoint for deployment monitoring |
+| Profile analysis | Public profile plus up to 200 recently updated repositories |
+| Portfolio insights | Stars, forks, languages, topics, activity, and completeness metrics |
+| Analysis history | MySQL snapshots for every run, not just the latest result |
+| Local cache | Configurable in-memory caching without a Redis dependency |
+| API protection | Helmet, CORS, request limits, validation, and parameterized queries |
+| Operations | Database-aware health check and GitHub rate-limit endpoint |
 
----
+## Quickstart
 
-## 🛠️ Tech Stack
+### Prerequisites
 
-- **Runtime**: Node.js 18+
-- **Framework**: Express.js
-- **Database**: MySQL 8.x (via `mysql2/promise`)
-- **External API**: GitHub REST API v3
-- **Libraries**: `axios`, `dotenv`, `helmet`, `cors`, `morgan`, `express-rate-limit`, `node-cache`
+- Node.js 18 or newer
+- MySQL 8.x
+- Optional GitHub token for a higher public API rate limit
 
----
-
-## 📁 Project Structure
-
-```
-github-analyzer/
-├── src/
-│   ├── app.js                    # Express entry point
-│   ├── config/
-│   │   └── database.js           # MySQL connection pool
-│   ├── controllers/
-│   │   └── profileController.js  # Route handlers
-│   ├── middleware/
-│   │   └── errorHandler.js       # Global error + 404 handlers
-│   ├── models/
-│   │   └── profileModel.js       # DB queries (upsert, fetch, delete)
-│   ├── routes/
-│   │   └── profileRoutes.js      # Express router
-│   └── utils/
-│       ├── githubClient.js       # Axios-based GitHub API client
-│       └── insightsEngine.js     # Insight computation logic
-├── sql/
-│   └── schema.sql                # DB schema + view definitions
-├── .env.example                  # Environment variable template
-├── package.json
-└── README.md
-```
-
----
-
-## ⚙️ Setup Instructions
-
-### 1. Clone the repository
+### 1. Install
 
 ```bash
 git clone https://github.com/adity982/github-profile-analyzer.git
 cd github-profile-analyzer
-```
-
-### 2. Install dependencies
-
-```bash
 npm install
 ```
 
-### 3. Configure environment variables
+### 2. Configure
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env`:
+Set the MySQL connection values in `.env`. `GITHUB_TOKEN` is optional; for public data, use a fine-grained token with no repository permissions.
 
 ```env
 PORT=3000
 NODE_ENV=development
-
-# MySQL
 DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=yourpassword
 DB_NAME=github_analyzer
-
-# GitHub Personal Access Token (optional but recommended)
-# Increases rate limit from 60 → 5000 requests/hour
-# Create one at: https://github.com/settings/tokens (no scopes needed for public data)
-GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxx
-
-# Cache TTL in seconds (default: 300 = 5 min)
+GITHUB_TOKEN=
 CACHE_TTL=300
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX=100
 ```
 
-### 4. Set up the MySQL database
-
-```bash
-# Log into MySQL
-mysql -u root -p
-
-# Run the schema
-source /path/to/github-analyzer/sql/schema.sql;
-```
-
-Or directly:
+### 3. Create the database
 
 ```bash
 mysql -u root -p < sql/schema.sql
 ```
 
-### 5. Start the server
+### 4. Run
 
 ```bash
-# Development (with auto-reload)
-npm run dev
-
-# Production
 npm start
 ```
 
-Server starts at `http://localhost:3000`
+The API starts at `http://localhost:3000`.
 
----
+### 5. Analyze a profile
 
-## 📡 API Reference
-
-### Base URL
-```
-http://localhost:3000/api
-```
-
----
-
-### `POST /api/profiles/analyze/:username`
-Fetch a GitHub user's profile and repos, compute insights, and store everything in the database.
-
-**Example:**
 ```bash
 curl -X POST http://localhost:3000/api/profiles/analyze/torvalds
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Profile 'torvalds' analyzed and stored successfully.",
-  "data": {
-    "profile": {
-      "id": 1,
-      "username": "torvalds",
-      "name": "Linus Torvalds",
-      "public_repos": 7,
-      "followers": 236000,
-      ...
-    },
-    "insights": {
-      "top_languages": ["C", "Perl"],
-      "total_stars_received": 210000,
-      "profile_score": 75,
-      "follower_ratio": 236000.0,
-      "has_recent_activity": true,
-      ...
-    }
-  }
-}
-```
-
----
-
-### `GET /api/profiles`
-List all analyzed profiles with their latest insights.
-
-**Query Parameters:**
-
-| Param | Type | Default | Description |
-|---|---|---|---|
-| `page` | int | `1` | Page number |
-| `limit` | int | `20` | Results per page (max 100) |
-| `search` | string | `""` | Filter by username |
-| `sortBy` | string | `last_analyzed_at` | Sort field |
-| `order` | string | `DESC` | `ASC` or `DESC` |
-
-**Sort options:** `followers`, `public_repos`, `total_stars_received`, `profile_score`, `last_analyzed_at`, `username`
-
-**Example:**
-```bash
-curl "http://localhost:3000/api/profiles?page=1&limit=10&sortBy=followers&order=DESC"
-```
-
----
-
-### `GET /api/profiles/:username`
-Get full stored data for a single profile, including the last 10 analysis snapshots.
-
-```bash
 curl http://localhost:3000/api/profiles/torvalds
 ```
 
-> Responses are cached in memory for `CACHE_TTL` seconds (default: 5 min).
+## API reference
 
----
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `POST` | `/api/profiles/analyze/:username` | Fetch, analyze, and save a public profile |
+| `GET` | `/api/profiles` | List saved profiles with pagination, search, and sorting |
+| `GET` | `/api/profiles/:username` | Return a profile and its latest analysis history |
+| `DELETE` | `/api/profiles/:username` | Remove a profile and its snapshots |
+| `GET` | `/api/github/rate-limit` | Show the current GitHub API allowance |
+| `GET` | `/health` | Check server and database readiness |
 
-### `DELETE /api/profiles/:username`
-Remove a profile and all its insight history from the database.
+The list endpoint accepts `page`, `limit`, `search`, `sortBy`, and `order`. Supported sort fields are `followers`, `public_repos`, `total_stars_received`, `profile_score`, `last_analyzed_at`, and `username`.
 
-```bash
-curl -X DELETE http://localhost:3000/api/profiles/torvalds
-```
-
----
-
-### `GET /api/github/rate-limit`
-Check your current GitHub API rate limit status.
-
-```bash
-curl http://localhost:3000/api/github/rate-limit
-```
-
----
-
-### `GET /health`
-Health check — verifies server + database connectivity.
+Example:
 
 ```bash
-curl http://localhost:3000/health
+curl "http://localhost:3000/api/profiles?page=1&limit=10&sortBy=total_stars_received&order=DESC"
 ```
 
----
+## Insights computed
 
-## 🧠 Insights Computed
+- top languages and language diversity
+- total and average stars and forks
+- total watchers
+- most-starred repository
+- original and forked repository counts
+- recently active repository count
+- commonly used repository topics
+- follower-to-following ratio
+- profile completeness score with a field-by-field breakdown
 
-| Insight | Description |
-|---|---|
-| `top_languages` | Top 10 programming languages across all public repos |
-| `language_diversity` | Count of unique languages used |
-| `total_stars_received` | Sum of ⭐ across all repos |
-| `total_forks_received` | Sum of forks across all repos |
-| `avg_stars_per_repo` | Average stars per repo |
-| `avg_forks_per_repo` | Average forks per repo |
-| `most_starred_repo` | Name + count of the most starred repo |
-| `forked_repos_count` | How many repos are forks (vs original) |
-| `original_repos_count` | How many repos are original work |
-| `has_recent_activity` | Any push in the last 6 months |
-| `active_repos_count` | Number of repos updated in the last 6 months |
-| `topics_used` | Top tags/topics used across repos |
-| `follower_ratio` | followers / following (influence signal) |
-| `profile_score` | 0–100 completeness score |
-| `score_breakdown` | Per-field score breakdown (bio, avatar, blog, etc.) |
+## Project structure
 
----
-
-## 🗄️ Database Schema
-
-Two tables + one view:
-
-- **`github_profiles`** — Core profile data, upserted on every analysis
-- **`profile_insights`** — One row per analysis run (history preserved)
-- **`profile_summary`** (VIEW) — Joins each profile with its latest insight row
-
-See [`sql/schema.sql`](./sql/schema.sql) for full schema with indexes.
-
----
-
-## 🚀 Deployment
-
-### Railway / Render / Fly.io
-
-1. Set all environment variables from `.env.example` in your platform dashboard
-2. Set start command to `npm start`
-3. Provision a MySQL database and point `DB_*` vars at it
-4. Run `sql/schema.sql` against your production DB
-
-### Docker (optional)
-
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm install --omit=dev
-COPY . .
-EXPOSE 3000
-CMD ["npm", "start"]
+```text
+src/
+├── app.js                    # Express entry point and health route
+├── config/database.js        # MySQL connection pool
+├── controllers/              # Request handlers
+├── middleware/               # Error and 404 handling
+├── models/                   # Parameterized database queries
+├── routes/                   # API routes
+└── utils/
+    ├── githubClient.js       # GitHub REST client and pagination
+    └── insightsEngine.js     # Side-effect-free insight computation
+sql/schema.sql                # Tables, indexes, and summary view
+test/insightsEngine.test.js   # Deterministic regression tests
 ```
 
----
+## Validation
 
-## 📦 Postman Collection
+The insight tests are isolated from GitHub and MySQL, so contributors can run them quickly and without credentials:
 
-Import `GitHub_Analyzer.postman_collection.json` from the repo root.
+```bash
+npm run lint
+npm test
+```
 
-Set the collection variable `base_url` to your deployed or local URL.
+GitHub Actions runs the same checks on Node.js 18, 20, and 22 for every pull request and every push to `main`. The regression suite covers aggregate metrics, empty profiles, recent activity, profile scoring, and input-order stability.
 
----
+For an end-to-end smoke test, start MySQL, apply `sql/schema.sql`, run the server, check `/health`, analyze a public account, and read the saved result back from `/api/profiles/:username`.
 
-## ✅ Validation
+## Database model
 
-This repository currently includes a manual smoke-test path:
+- `github_profiles` stores the latest core profile fields.
+- `profile_insights` stores one immutable snapshot per analysis run.
+- `profile_summary` joins each profile to its latest insight row.
 
-1. Start MySQL and apply `sql/schema.sql`.
-2. Run `npm install` and `npm start`.
-3. Check `GET /health` for server and database status.
-4. Analyze a public account with `POST /api/profiles/analyze/:username`.
-5. Confirm the saved result with `GET /api/profiles/:username`.
+See [`sql/schema.sql`](sql/schema.sql) for the complete schema.
 
-Automated tests and CI are not included yet; treat this as a reference implementation until that gap is closed.
+## Deployment
 
----
+The service can run on Railway, Render, Fly.io, or another Node.js host with MySQL:
 
-## 📝 Notes
+1. Provision a MySQL database.
+2. Apply `sql/schema.sql` once.
+3. Set the variables from `.env.example` in the platform dashboard.
+4. Use `npm start` as the start command.
+5. Monitor `/health` for database readiness.
 
-- Without a `GITHUB_TOKEN`, the GitHub API allows 60 requests/hour. With a token, this increases to **5,000/hour**. Tokens for public data require no scopes.
-- The `profile_insights` table keeps a full history of every analysis run, so you can track metric changes over time.
-- All DB queries use parameterized statements — no SQL injection risk.
+## Operational notes
 
+- Anonymous GitHub API access is limited to 60 requests per hour; authenticated public requests typically allow 5,000 per hour.
+- The analyzer intentionally caps repository fetching at 200 repositories per profile.
+- Cached reads use the `CACHE_TTL` value and do not require Redis.
+- Never commit `.env` or a GitHub token. The included `.gitignore` excludes local environment files.
 
----
-
-## 📄 License
+## License
 
 Licensed under the [ISC License](LICENSE).

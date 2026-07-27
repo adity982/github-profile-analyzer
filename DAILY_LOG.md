@@ -51,3 +51,29 @@ Add an integration-test seam around the GitHub client and database boundary, the
 ### Next move
 
 Rebase or recreate draft PR #4 as a focused startup-import change, dropping the already-shipped insight-order work. Add an integration test around app import/start behavior, and do not open another upstream PR until the existing queue has been reduced.
+
+## 2026-07-27
+
+### Shipped
+
+- recreated the stale draft as focused PR #5 from current `main`, carrying only the import-safe startup change, its regression test, and README guidance
+- guarded server startup with `require.main === module` and exported `start()` for explicit lifecycle control
+- added a credential-free subprocess test that detects accidental MySQL connections or HTTP listeners during import
+- closed superseded PR #4 with a pointer to the clean replacement
+
+### Validation
+
+- branch started from commit `aa7031d44a512bb50953d0d61ffe0d4c8f85a2f7` with no divergence
+- the functional diff is limited to `src/app.js`, `test/app.test.js`, and README guidance
+- GitHub Actions run `30241223234` passed syntax checks and regression tests on Node.js 18, 20, and 22
+- PR #5 has no review comments, threads, or requested changes at shipping time
+
+### Metrics to watch
+
+- stars, forks, clones, unique visitors, and README traffic
+- CI stability and time to first external issue or contribution
+- issue-to-merge cycle time and authored open-PR backlog
+
+### Next move
+
+Merge PR #5 after the final documentation-only CI pass, then add a safe example response fixture or OpenAPI contract so users can evaluate the API before provisioning MySQL.

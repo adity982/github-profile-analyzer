@@ -85,7 +85,7 @@ function computeInsights(user, repos) {
   const forkedRepos   = repos.filter(r => r.fork);
   const originalRepos = repos.filter(r => !r.fork);
 
-  // Most starred
+  // Most starred (reduce instead of sorting so callers keep their repo order)
   const mostStarred = repos.reduce((best, repo) => {
     if (!best) return repo;
     return (repo.stargazers_count || 0) > (best.stargazers_count || 0) ? repo : best;
@@ -98,8 +98,8 @@ function computeInsights(user, repos) {
   });
 
   // Languages & topics
-  const topLanguages     = computeLanguages(repos);
-  const topicsUsed       = computeTopics(repos);
+  const topLanguages      = computeLanguages(repos);
+  const topicsUsed        = computeTopics(repos);
   const languageDiversity = topLanguages.length;
 
   // Profile completeness

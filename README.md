@@ -20,6 +20,7 @@ A repository count alone says little about a developer portfolio. This API combi
 | Local cache | Configurable in-memory caching without a Redis dependency |
 | API protection | Helmet, CORS, request limits, validation, and parameterized queries |
 | Operations | Database-aware health check and GitHub rate-limit endpoint |
+| Testable startup | Import the Express app without opening a listener or connecting to MySQL |
 
 ## Quickstart
 
@@ -125,12 +126,14 @@ src/
     ├── githubClient.js       # GitHub REST client and pagination
     └── insightsEngine.js     # Side-effect-free insight computation
 sql/schema.sql                # Tables, indexes, and summary view
-test/insightsEngine.test.js   # Deterministic regression tests
+test/
+├── app.test.js               # Import/startup side-effect regression test
+└── insightsEngine.test.js    # Deterministic insight regression tests
 ```
 
 ## Validation
 
-The insight tests are isolated from GitHub and MySQL, so contributors can run them quickly and without credentials:
+The regression suite is isolated from live GitHub requests and MySQL, so contributors can run it quickly and without credentials. Importing `src/app.js` is side-effect free; the database connection and HTTP listener start only when the file is executed directly or `start()` is called:
 
 ```bash
 npm run lint

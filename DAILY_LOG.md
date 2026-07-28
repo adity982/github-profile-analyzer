@@ -77,3 +77,31 @@ Rebase or recreate draft PR #4 as a focused startup-import change, dropping the 
 ### Next move
 
 Merge PR #5 after the final documentation-only CI pass, then add a safe example response fixture or OpenAPI contract so users can evaluate the API before provisioning MySQL.
+
+## 2026-07-28
+
+### Shipped
+
+- published a complete synthetic success response at `docs/example-analyze-response.json`
+- linked the fixture from the quickstart and documented it in the project structure
+- added GitHub Profile Analyzer to the public profile README as a recently shipped, regression-protected project
+- avoided another upstream contribution because the authored pull-request queue is already large
+
+### Validation
+
+- parsed the fixture as strict JSON
+- matched all 17 insight fields against `computeInsights()` and the success envelope against `analyzeProfile()`
+- verified the score breakdown totals 70 out of 100 and no component exceeds its maximum
+- used only synthetic identity data; no token, credential, database row, or real profile export is included
+
+### Metrics to watch
+
+- repository stars, forks, clones, unique visitors, and README-to-fixture clicks
+- first external issue, contribution, or API user
+- profile visits to GitHub Profile Analyzer
+- open authored PR count and review turnaround
+
+### Next move
+
+Publish an OpenAPI 3.1 contract generated from the existing routes and response fields, then validate it in CI. Defer new upstream PRs until the current review queue has materially reduced.
+

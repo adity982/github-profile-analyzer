@@ -81,6 +81,10 @@ curl -X POST http://localhost:3000/api/profiles/analyze/torvalds
 curl http://localhost:3000/api/profiles/torvalds
 ```
 
+### Example response
+
+See [`docs/example-analyze-response.json`](docs/example-analyze-response.json) for a complete, synthetic success response from `POST /api/profiles/analyze/:username`. It uses placeholder identity data and mirrors the controller's current response fields, so you can evaluate the API shape without a GitHub token or MySQL setup.
+
 ## API reference
 
 | Method | Endpoint | Purpose |
@@ -126,6 +130,8 @@ src/
     ├── githubClient.js       # GitHub REST client and pagination
     └── insightsEngine.js     # Side-effect-free insight computation
 sql/schema.sql                # Tables, indexes, and summary view
+docs/
+└── example-analyze-response.json # Synthetic successful analysis fixture
 test/
 ├── app.test.js               # Import/startup side-effect regression test
 └── insightsEngine.test.js    # Deterministic insight regression tests

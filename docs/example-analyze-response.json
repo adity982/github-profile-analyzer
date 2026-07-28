@@ -1,0 +1,49 @@
+{
+  "success": true,
+  "message": "Profile 'octo-example' analyzed and stored successfully.",
+  "data": {
+    "profile": {
+      "id": 42,
+      "username": "octo-example",
+      "name": "Example Developer",
+      "bio": "Builds small, well-tested developer tools.",
+      "location": "Example City",
+      "avatar_url": "https://avatars.githubusercontent.com/u/0?v=4",
+      "github_url": "https://github.com/octo-example",
+      "public_repos": 12,
+      "followers": 24,
+      "following": 8,
+      "account_created_at": "2022-01-15T10:30:00Z"
+    },
+    "insights": {
+      "top_languages": ["JavaScript", "Python", "TypeScript"],
+      "language_diversity": 3,
+      "total_stars_received": 37,
+      "total_forks_received": 9,
+      "total_watchers": 37,
+      "avg_stars_per_repo": 3.08,
+      "avg_forks_per_repo": 0.75,
+      "forked_repos_count": 2,
+      "original_repos_count": 10,
+      "most_starred_repo": "useful-cli",
+      "most_starred_count": 18,
+      "has_recent_activity": true,
+      "active_repos_count": 5,
+      "topics_used": ["developer-tools", "automation", "github-api"],
+      "profile_score": 70,
+      "score_breakdown": {
+        "name": { "earned": 15, "max": 15 },
+        "bio": { "earned": 20, "max": 20 },
+        "avatar": { "earned": 10, "max": 10 },
+        "location": { "earned": 10, "max": 10 },
+        "blog": { "earned": 0, "max": 10 },
+        "email": { "earned": 0, "max": 10 },
+        "company": { "earned": 0, "max": 5 },
+        "twitter": { "earned": 0, "max": 5 },
+        "hireable": { "earned": 5, "max": 5 },
+        "has_repos": { "earned": 10, "max": 10 }
+      },
+      "follower_ratio": 3
+    }
+  }
+}

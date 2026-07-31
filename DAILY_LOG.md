@@ -105,3 +105,32 @@ Merge PR #5 after the final documentation-only CI pass, then add a safe example 
 
 Publish an OpenAPI 3.1 contract generated from the existing routes and response fields, then validate it in CI. Defer new upstream PRs until the current review queue has materially reduced.
 
+## 2026-07-31
+
+### Shipped
+
+- published a machine-readable OpenAPI 3.1 contract for every Express route
+- documented parameters, success and error responses, profile insights, pagination, health, and GitHub rate-limit shapes
+- added a dependency-free contract test that detects route drift and validates the synthetic success fixture
+- surfaced the contract in the README and made contract validation an explicit CI step
+- avoided another upstream contribution because many authored PRs were updated after the previous run
+
+### Validation
+
+- parsed the generated contract as strict JSON
+- confirmed all seven implemented method/path pairs are documented exactly once with unique operation IDs
+- matched username and pagination constraints to the controller safeguards
+- validated the synthetic response fixture against the published analysis schema
+- configured Node.js 18, 20, and 22 CI to run the focused contract check
+
+### Metrics to watch
+
+- repository stars, forks, clones, unique visitors, and README-to-contract clicks
+- API client or documentation usage prompted by the machine-readable contract
+- CI contract-drift failures and first external issue or contribution
+- open authored PR count and review turnaround
+
+### Next move
+
+Protect the destructive DELETE endpoint before any public deployment, then generate a browsable API reference or one-command Docker demo from the checked contract. Continue reducing the existing PR queue before creating new upstream work.
+

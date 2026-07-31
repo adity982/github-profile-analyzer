@@ -1,0 +1,1166 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "GitHub Profile Analyzer API",
+    "version": "1.0.0",
+    "description": "Analyze public GitHub profiles, persist portfolio snapshots in MySQL, and retrieve profile trends. This contract mirrors src/app.js and src/routes/profileRoutes.js.",
+    "license": {
+      "name": "ISC",
+      "identifier": "ISC"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Service",
+      "description": "Service discovery and readiness"
+    },
+    {
+      "name": "Profiles",
+      "description": "Profile analysis and stored results"
+    },
+    {
+      "name": "GitHub",
+      "description": "GitHub API quota information"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "tags": [
+          "Service"
+        ],
+        "operationId": "getServiceIndex",
+        "summary": "Discover the service and its endpoints",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceIndexResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Service"
+        ],
+        "operationId": "getHealth",
+        "summary": "Check server and database readiness",
+        "responses": {
+          "200": {
+            "description": "Server and database are ready",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "MySQL is unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/profiles/analyze/{username}": {
+      "post": {
+        "tags": [
+          "Profiles"
+        ],
+        "operationId": "analyzeProfile",
+        "summary": "Analyze and persist a public GitHub profile",
+        "description": "Fetches the public profile and up to 200 recently updated public repositories, computes insights, and stores a snapshot.",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "description": "GitHub login (1–39 characters; no leading or trailing hyphen).",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 39,
+              "pattern": "^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$"
+            },
+            "example": "octocat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyzeProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid username",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "GitHub user not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Local or GitHub rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server or persistence error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/profiles": {
+      "get": {
+        "tags": [
+          "Profiles"
+        ],
+        "operationId": "listProfiles",
+        "summary": "List stored profiles",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Username substring."
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "followers",
+                "public_repos",
+                "total_stars_received",
+                "profile_score",
+                "last_analyzed_at",
+                "username"
+              ],
+              "default": "last_analyzed_at"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ASC",
+                "DESC"
+              ],
+              "default": "DESC"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileListResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Local API rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server or persistence error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/profiles/{username}": {
+      "get": {
+        "tags": [
+          "Profiles"
+        ],
+        "operationId": "getProfile",
+        "summary": "Get a stored profile and recent history",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "description": "GitHub login (1–39 characters; no leading or trailing hyphen).",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 39,
+              "pattern": "^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$"
+            },
+            "example": "octocat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoredProfileResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Profile has not been analyzed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Local API rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server or persistence error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Profiles"
+        ],
+        "operationId": "deleteProfile",
+        "summary": "Delete a stored profile and its history",
+        "description": "Cascade-deletes snapshots. The reference implementation currently has no authentication; protect this route before public deployment.",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "description": "GitHub login (1–39 characters; no leading or trailing hyphen).",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 39,
+              "pattern": "^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$"
+            },
+            "example": "octocat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Stored profile not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Local API rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server or persistence error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/github/rate-limit": {
+      "get": {
+        "tags": [
+          "GitHub"
+        ],
+        "operationId": "getGitHubRateLimit",
+        "summary": "Get the current GitHub REST API allowance",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Local API rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "GitHub API request failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": false
+          },
+          "message": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          },
+          "stack": {
+            "type": "string",
+            "description": "Development only."
+          }
+        }
+      },
+      "MessageResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ServiceIndexResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "service",
+          "version",
+          "endpoints"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          },
+          "service": {
+            "type": "string",
+            "const": "GitHub Profile Analyzer API"
+          },
+          "version": {
+            "type": "string",
+            "const": "1.0.0"
+          },
+          "endpoints": {
+            "type": "object",
+            "required": [
+              "analyze",
+              "listAll",
+              "getOne",
+              "delete",
+              "rateLimit",
+              "health"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "status",
+          "uptime",
+          "timestamp"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "object",
+            "required": [
+              "server",
+              "database"
+            ],
+            "properties": {
+              "server": {
+                "type": "string",
+                "const": "ok"
+              },
+              "database": {
+                "type": "string",
+                "enum": [
+                  "ok",
+                  "error"
+                ]
+              }
+            }
+          },
+          "uptime": {
+            "type": "number",
+            "minimum": 0
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Profile": {
+        "type": "object",
+        "required": [
+          "id",
+          "username",
+          "name",
+          "bio",
+          "location",
+          "avatar_url",
+          "github_url",
+          "public_repos",
+          "followers",
+          "following",
+          "account_created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "username": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bio": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "avatar_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "github_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "public_repos": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "followers": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "following": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "account_created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ScorePart": {
+        "type": "object",
+        "required": [
+          "earned",
+          "max"
+        ],
+        "properties": {
+          "earned": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "max": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "ScoreBreakdown": {
+        "type": "object",
+        "required": [
+          "name",
+          "bio",
+          "avatar",
+          "location",
+          "blog",
+          "email",
+          "company",
+          "repos",
+          "followers"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/ScorePart"
+          },
+          "bio": {
+            "$ref": "#/components/schemas/ScorePart"
+          },
+          "avatar": {
+            "$ref": "#/components/schemas/ScorePart"
+          },
+          "location": {
+            "$ref": "#/components/schemas/ScorePart"
+          },
+          "blog": {
+            "$ref": "#/components/schemas/ScorePart"
+          },
+          "email": {
+            "$ref": "#/components/schemas/ScorePart"
+          },
+          "company": {
+            "$ref": "#/components/schemas/ScorePart"
+          },
+          "repos": {
+            "$ref": "#/components/schemas/ScorePart"
+          },
+          "followers": {
+            "$ref": "#/components/schemas/ScorePart"
+          }
+        }
+      },
+      "Insights": {
+        "type": "object",
+        "required": [
+          "top_languages",
+          "language_diversity",
+          "total_stars_received",
+          "total_forks_received",
+          "total_watchers",
+          "avg_stars_per_repo",
+          "avg_forks_per_repo",
+          "forked_repos_count",
+          "original_repos_count",
+          "most_starred_repo",
+          "most_starred_count",
+          "has_recent_activity",
+          "active_repos_count",
+          "topics_used",
+          "profile_score",
+          "score_breakdown",
+          "follower_ratio"
+        ],
+        "properties": {
+          "top_languages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "language_diversity": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "total_stars_received": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "total_forks_received": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "total_watchers": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "avg_stars_per_repo": {
+            "type": "number",
+            "minimum": 0
+          },
+          "avg_forks_per_repo": {
+            "type": "number",
+            "minimum": 0
+          },
+          "forked_repos_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "original_repos_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "most_starred_repo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "most_starred_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "has_recent_activity": {
+            "type": "boolean"
+          },
+          "active_repos_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "topics_used": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "profile_score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "score_breakdown": {
+            "$ref": "#/components/schemas/ScoreBreakdown"
+          },
+          "follower_ratio": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          }
+        }
+      },
+      "AnalyzeProfileResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "profile",
+              "insights"
+            ],
+            "properties": {
+              "profile": {
+                "$ref": "#/components/schemas/Profile"
+              },
+              "insights": {
+                "$ref": "#/components/schemas/Insights"
+              }
+            }
+          }
+        }
+      },
+      "ProfileSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "username",
+          "public_repos",
+          "followers",
+          "following",
+          "analysis_count"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "username": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bio": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "avatar_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          },
+          "github_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          },
+          "public_repos": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "followers": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "following": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "account_created_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "analysis_count": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "last_analyzed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "top_languages": {
+            "oneOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "total_stars_received": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "total_forks_received": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "most_starred_repo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "most_starred_count": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "profile_score": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100
+          },
+          "follower_ratio": {
+            "type": [
+              "number",
+              "string",
+              "null"
+            ]
+          },
+          "has_recent_activity": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer",
+                "enum": [
+                  0,
+                  1
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "language_diversity": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          }
+        }
+      },
+      "AnalysisHistoryEntry": {
+        "type": "object",
+        "required": [
+          "analyzed_at",
+          "total_stars_received",
+          "total_forks_received",
+          "profile_score",
+          "follower_ratio",
+          "language_diversity",
+          "active_repos_count"
+        ],
+        "properties": {
+          "analyzed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "total_stars_received": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "total_forks_received": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "profile_score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "follower_ratio": {
+            "type": [
+              "number",
+              "string"
+            ]
+          },
+          "language_diversity": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "active_repos_count": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "StoredProfile": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProfileSummary"
+          },
+          {
+            "type": "object",
+            "required": [
+              "analysis_history"
+            ],
+            "properties": {
+              "analysis_history": {
+                "type": "array",
+                "maxItems": 10,
+                "items": {
+                  "$ref": "#/components/schemas/AnalysisHistoryEntry"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "StoredProfileResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "source",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "cache",
+              "database"
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/StoredProfile"
+          }
+        }
+      },
+      "ProfileListData": {
+        "type": "object",
+        "required": [
+          "profiles",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ],
+        "properties": {
+          "profiles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileSummary"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "totalPages": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "ProfileListResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/ProfileListData"
+          }
+        }
+      },
+      "RateLimit": {
+        "type": "object",
+        "required": [
+          "limit",
+          "remaining",
+          "reset",
+          "used"
+        ],
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "remaining": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "reset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "used": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "resource": {
+            "type": "string"
+          }
+        }
+      },
+      "RateLimitResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/RateLimit"
+          }
+        }
+      }
+    }
+  }
+}

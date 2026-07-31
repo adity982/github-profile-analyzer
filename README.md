@@ -83,7 +83,7 @@ curl http://localhost:3000/api/profiles/torvalds
 
 ### Example response
 
-See [`docs/example-analyze-response.json`](docs/example-analyze-response.json) for a complete, synthetic success response from `POST /api/profiles/analyze/:username`. It uses placeholder identity data and mirrors the controller's current response fields, so you can evaluate the API shape without a GitHub token or MySQL setup.
+Explore the machine-readable [`OpenAPI 3.1 contract`](docs/openapi.json) or see [`docs/example-analyze-response.json`](docs/example-analyze-response.json) for a complete, synthetic success response from `POST /api/profiles/analyze/:username`. It uses placeholder identity data and mirrors the controller's current response fields, so you can evaluate the API shape without a GitHub token or MySQL setup.
 
 ## API reference
 
@@ -131,6 +131,7 @@ src/
     └── insightsEngine.js     # Side-effect-free insight computation
 sql/schema.sql                # Tables, indexes, and summary view
 docs/
+├── openapi.json                  # OpenAPI 3.1 contract for every route
 └── example-analyze-response.json # Synthetic successful analysis fixture
 test/
 ├── app.test.js               # Import/startup side-effect regression test
@@ -143,10 +144,11 @@ The regression suite is isolated from live GitHub requests and MySQL, so contrib
 
 ```bash
 npm run lint
+npm run check:openapi
 npm test
 ```
 
-GitHub Actions runs the same checks on Node.js 18, 20, and 22 for every pull request and every push to `main`. The regression suite covers aggregate metrics, empty profiles, recent activity, profile scoring, and input-order stability.
+GitHub Actions runs the same checks on Node.js 18, 20, and 22 for every pull request and every push to `main`. The regression suite covers aggregate metrics, empty profiles, recent activity, profile scoring, and input-order stability. The contract test also compares documented methods and paths with the Express routers and validates the synthetic fixture against the published success schema.
 
 For an end-to-end smoke test, start MySQL, apply `sql/schema.sql`, run the server, check `/health`, analyze a public account, and read the saved result back from `/api/profiles/:username`.
 

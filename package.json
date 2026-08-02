@@ -7,9 +7,16 @@
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
     "lint": "node --check src/app.js && node --check src/utils/githubClient.js && node --check src/utils/insightsEngine.js",
-    "test": "node --test"
+    "test": "node --test",
+    "check:openapi": "node --test test/openapi.test.js"
   },
-  "keywords": ["github", "api", "node", "express", "mysql"],
+  "keywords": [
+    "github",
+    "api",
+    "node",
+    "express",
+    "mysql"
+  ],
   "author": "Aditya Datta",
   "license": "ISC",
   "dependencies": {

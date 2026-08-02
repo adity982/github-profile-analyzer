@@ -644,8 +644,9 @@
           "blog",
           "email",
           "company",
-          "repos",
-          "followers"
+          "twitter",
+          "hireable",
+          "has_repos"
         ],
         "additionalProperties": false,
         "properties": {
@@ -670,10 +671,13 @@
           "company": {
             "$ref": "#/components/schemas/ScorePart"
           },
-          "repos": {
+          "twitter": {
             "$ref": "#/components/schemas/ScorePart"
           },
-          "followers": {
+          "hireable": {
+            "$ref": "#/components/schemas/ScorePart"
+          },
+          "has_repos": {
             "$ref": "#/components/schemas/ScorePart"
           }
         }

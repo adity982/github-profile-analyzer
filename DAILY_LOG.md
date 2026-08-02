@@ -134,3 +134,30 @@ Publish an OpenAPI 3.1 contract generated from the existing routes and response 
 
 Protect the destructive DELETE endpoint before any public deployment, then generate a browsable API reference or one-command Docker demo from the checked contract. Continue reducing the existing PR queue before creating new upstream work.
 
+## 2026-08-02
+
+### Shipped
+
+- removed the accidental empty `SHOULD_NOT_CREATE` file from the OpenAPI branch
+- fixed stale score-breakdown schema names discovered by running the contract test locally
+- opened draft PR #6 with the checked OpenAPI 3.1 contract, README guidance, and Node.js CI coverage
+- left Warden PR #11 unchanged because its requested follow-up was already published and no newer maintainer request exists
+
+### Validation
+
+- `npm run lint` passed
+- `npm run check:openapi` passed all 3 focused contract tests
+- `npm test` passed all 7 regression and contract tests
+- GitHub Actions run `30732725356` passed on Node.js 18, 20, and 22
+- PR #6 is mergeable and its branch is 9 commits ahead with no divergence from `main` before this log entry
+
+### Metrics to watch
+
+- PR #6 CI stability, review status, and merge
+- repository stars, forks, clones, unique visitors, and README-to-contract clicks
+- first OpenAPI client, integration question, external issue, or contribution
+- authored open-PR backlog and maintainer response time
+
+### Next move
+
+Review and merge PR #6 after its final documentation-only CI pass. Then protect the destructive DELETE endpoint before public deployment and publish a browsable API reference generated from the checked contract.
